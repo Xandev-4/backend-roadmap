@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backend Engineering Plan</title>
+<script>
+(function () {
+  document.documentElement.classList.add('js');
+  try { var t = localStorage.getItem('bp-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Everforest-light inspired */
+  --bg: #fdf6e3;
+  --bg2: #f4f0d9;
+  --surface: #fffbef;
+  --surface2: #f8f3dd;
+  --line: #e6e2cc;
+  --text: #5c6a72;
+  --heading: #435257;
+  --muted: #939f91;
+  --red: #e5898a;
+  --orange: #eba382;
+  --yellow: #e3c47c;
+  --green: #a7c080;
+  --aqua: #83c092;
+  --blue: #7fbbb3;
+  --purple: #b5a0d6;
+  --pink: #e3a1c0;
+  --shadow: 0 10px 30px -12px rgba(92, 106, 114, .25);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1e1e2e; --bg2: #181825; --surface: #26273a; --surface2: #2b2c41; --line: #3b3d54;
+    --text: #cdd6f4; --heading: #e6ebff; --muted: #9399b2;
+    --red: #f38ba8; --orange: #fab387; --yellow: #f9e2af; --green: #a6e3a1; --aqua: #94e2d5;
+    --blue: #89b4fa; --purple: #cba6f7; --pink: #f5c2e7;
+    --shadow: 0 10px 30px -12px rgba(0, 0, 0, .55);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1e1e2e; --bg2: #181825; --surface: #26273a; --surface2: #2b2c41; --line: #3b3d54;
+  --text: #cdd6f4; --heading: #e6ebff; --muted: #9399b2;
+  --red: #f38ba8; --orange: #fab387; --yellow: #f9e2af; --green: #a6e3a1; --aqua: #94e2d5;
+  --blue: #89b4fa; --purple: #cba6f7; --pink: #f5c2e7;
+  --shadow: 0 10px 30px -12px rgba(0, 0, 0, .55);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.7 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  transition: background .4s ease, color .4s ease;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(55rem 38rem at 95% -10%, color-mix(in srgb, var(--purple) 16%, transparent), transparent),
+    radial-gradient(48rem 38rem at -10% 105%, color-mix(in srgb, var(--green) 20%, transparent), transparent),
+    radial-gradient(40rem 30rem at 60% 60%, color-mix(in srgb, var(--yellow) 8%, transparent), transparent);
+}
+a { color: color-mix(in srgb, var(--blue) 55%, var(--text)); text-underline-offset: 3px; text-decoration-thickness: 1.5px; text-decoration-color: color-mix(in srgb, var(--blue) 50%, transparent); transition: color .2s; }
+a:hover { color: var(--heading); }
+::selection { background: color-mix(in srgb, var(--pink) 50%, transparent); }
+
+code, pre { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+code { font-size: .86em; padding: .12em .45em; border-radius: 7px; background: color-mix(in srgb, var(--aqua) 18%, var(--surface)); color: color-mix(in srgb, var(--aqua) 40%, var(--heading)); border: 1px solid color-mix(in srgb, var(--aqua) 25%, transparent); }
+
+/* progress bar */
+#readbar { position: fixed; top: 0; left: 0; height: 4px; width: 0; z-index: 100; background: linear-gradient(90deg, var(--green), var(--aqua), var(--blue), var(--purple), var(--pink)); border-radius: 0 4px 4px 0; transition: width .1s linear; }
+
+/* layout */
+.layout { display: grid; grid-template-columns: 296px minmax(0, 1fr); min-height: 100vh; }
+.sidebar {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 26px 18px 30px 22px;
+  background: color-mix(in srgb, var(--bg2) 82%, transparent); backdrop-filter: blur(10px);
+  border-right: 1px solid var(--line); z-index: 40; scrollbar-width: thin;
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1.15rem; color: var(--heading); letter-spacing: -.01em; }
+.brand .leaf { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; background: linear-gradient(135deg, var(--green), var(--aqua)); box-shadow: var(--shadow); animation: sway 5s ease-in-out infinite; }
+@keyframes sway { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(8deg) translateY(-2px); } }
+.side-tools { display: flex; gap: 10px; align-items: center; margin: 18px 0 8px; }
+.theme-btn { cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--heading); width: 40px; height: 40px; border-radius: 12px; font-size: 1.1rem; transition: transform .25s, background .25s; }
+.theme-btn:hover { transform: rotate(18deg) scale(1.08); }
+.prog { flex: 1; }
+.prog-label { font-size: .78rem; color: var(--muted); font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 5px; }
+.prog-track { height: 9px; background: var(--surface2); border-radius: 99px; overflow: hidden; border: 1px solid var(--line); }
+.prog-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--green), var(--aqua)); transition: width .6s cubic-bezier(.2, .9, .3, 1.2); }
+
+.toc-group { margin-top: 18px; }
+.toc-h { display: block; font-weight: 800; font-size: .74rem; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); text-decoration: none; padding: 4px 8px; }
+.toc-i { position: relative; display: block; text-decoration: none; color: var(--text); padding: 6px 10px 6px 14px; margin: 2px 0; border-radius: 10px; font-size: .92rem; font-weight: 600; transition: background .2s, transform .2s, color .2s; }
+.toc-i small { display: inline-block; min-width: 2.2em; font-weight: 800; color: var(--muted); font-size: .78em; }
+.toc-i:hover { background: var(--surface2); transform: translateX(3px); }
+.toc-i.active, .toc-h.active { background: color-mix(in srgb, var(--green) 26%, var(--surface)); color: var(--heading); }
+.toc-i.active::before { content: ""; position: absolute; left: 3px; top: 20%; bottom: 20%; width: 3px; border-radius: 3px; background: var(--green); }
+
+.menu-btn { display: none; position: fixed; top: 14px; left: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--heading); font-size: 1.2rem; cursor: pointer; box-shadow: var(--shadow); }
+.scrim { display: none; }
+
+main { padding: 36px clamp(18px, 4vw, 56px) 120px; width: 100%; max-width: 1080px; margin: 0 auto; }
+
+/* hero */
+.hero { position: relative; overflow: hidden; border-radius: 32px; padding: clamp(28px, 5vw, 56px); margin-bottom: 40px; background: linear-gradient(145deg, color-mix(in srgb, var(--green) 24%, var(--surface)), color-mix(in srgb, var(--blue) 20%, var(--surface)) 55%, color-mix(in srgb, var(--pink) 22%, var(--surface))); border: 1px solid var(--line); box-shadow: var(--shadow); animation: pop .8s cubic-bezier(.2, .9, .3, 1.1) both; }
+@keyframes pop { from { opacity: 0; transform: translateY(24px) scale(.98); } to { opacity: 1; transform: none; } }
+.blob { position: absolute; border-radius: 50%; filter: blur(34px); opacity: .55; animation: float 14s ease-in-out infinite; pointer-events: none; }
+.b1 { width: 260px; height: 260px; background: var(--yellow); top: -80px; right: -40px; }
+.b2 { width: 220px; height: 220px; background: var(--purple); bottom: -90px; left: 18%; animation-delay: -5s; }
+.b3 { width: 160px; height: 160px; background: var(--aqua); top: 30%; right: 26%; animation-delay: -9s; opacity: .4; }
+@keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(24px, -28px) scale(1.08); } 66% { transform: translate(-22px, 18px) scale(.94); } }
+.hero-inner { position: relative; }
+.eyebrow { display: inline-block; font-weight: 800; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; padding: 6px 14px; border-radius: 99px; background: color-mix(in srgb, var(--surface) 70%, transparent); border: 1px solid var(--line); color: var(--heading); }
+.hero h1 { margin: 16px 0 26px; font-size: clamp(2.1rem, 5.4vw, 3.6rem); line-height: 1.08; letter-spacing: -.03em; font-weight: 900; color: var(--heading); }
+.hero h1 { background: linear-gradient(100deg, var(--heading) 20%, color-mix(in srgb, var(--green) 55%, var(--heading)), color-mix(in srgb, var(--purple) 60%, var(--heading)), var(--heading) 80%); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 9s linear infinite; }
+@keyframes shimmer { to { background-position: -250% 0; } }
+.pill { display: inline-block; font-size: .4em; vertical-align: middle; padding: .3em .9em; margin-left: .3em; border-radius: 99px; background: var(--yellow); color: #4b4630; -webkit-text-fill-color: #4b4630; letter-spacing: 0; box-shadow: 0 4px 0 color-mix(in srgb, var(--yellow) 60%, #000 10%); animation: bob 3s ease-in-out infinite; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.meta-card { padding: 16px 18px; border-radius: 20px; background: color-mix(in srgb, var(--surface) 78%, transparent); border: 1px solid var(--line); backdrop-filter: blur(6px); transition: transform .3s, box-shadow .3s; }
+.meta-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+.meta-card:first-child { grid-column: 1 / -1; }
+.meta-label { font-weight: 900; font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; color: color-mix(in srgb, var(--green) 55%, var(--text)); }
+.meta-card p { margin: 4px 0 0; }
+.meta-card ol { margin: 8px 0 0; padding-left: 1.4em; list-style: none; counter-reset: c; display: grid; gap: 6px; }
+.meta-card ol li { counter-increment: c; position: relative; padding-left: 10px; }
+.meta-card ol li::before { content: counter(c); position: absolute; left: -22px; top: 3px; width: 22px; height: 22px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; font-size: .75rem; background: var(--aqua); color: #1f3a31; }
+
+/* chapters */
+.chapter { margin-bottom: 56px; }
+.chapter.intro { --acc: var(--blue); }
+.chapter.p1 { --acc: var(--green); }
+.chapter.p2 { --acc: var(--blue); }
+.chapter.p3 { --acc: var(--purple); }
+.chapter.p4 { --acc: var(--orange); }
+.chapter.plain { --acc: var(--pink); }
+.phase-banner { position: relative; overflow: hidden; display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; padding: 26px 30px; border-radius: 26px; margin: 8px 0 26px; background: linear-gradient(120deg, color-mix(in srgb, var(--acc) 38%, var(--surface)), color-mix(in srgb, var(--acc) 12%, var(--surface))); border: 1px solid color-mix(in srgb, var(--acc) 40%, var(--line)); box-shadow: var(--shadow); }
+.phase-banner::after { content: ""; position: absolute; right: -40px; top: -60px; width: 200px; height: 200px; border-radius: 50%; background: color-mix(in srgb, var(--acc) 40%, transparent); filter: blur(30px); animation: float 12s ease-in-out infinite; }
+.phase-num { font-weight: 900; font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; padding: 6px 14px; border-radius: 99px; background: var(--surface); color: color-mix(in srgb, var(--acc) 50%, var(--heading)); border: 1px solid color-mix(in srgb, var(--acc) 50%, var(--line)); position: relative; z-index: 1; }
+.phase-banner h1 { margin: 0; font-size: clamp(1.5rem, 3.4vw, 2.2rem); color: var(--heading); font-weight: 900; letter-spacing: -.02em; position: relative; z-index: 1; }
+.phase-banner > p { flex-basis: 100%; }
+
+.chapter > p { margin: 10px 4px; }
+.chapter > .lead, .chapter > p.note { background: var(--surface); }
+
+/* week cards */
+.week { background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--line); border-radius: 28px; padding: clamp(18px, 3vw, 30px); margin: 0 0 28px; box-shadow: var(--shadow); position: relative; }
+.week::before { content: ""; position: absolute; left: 28px; right: 28px; top: -1px; height: 5px; border-radius: 0 0 6px 6px; background: linear-gradient(90deg, var(--acc), color-mix(in srgb, var(--acc) 30%, transparent)); }
+.week-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+.week-head h2 { margin: 0; font-size: clamp(1.25rem, 2.6vw, 1.7rem); color: var(--heading); font-weight: 900; letter-spacing: -.02em; line-height: 1.2; }
+.week-num { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 16px; border-radius: 16px; font-weight: 800; font-size: .82rem; text-transform: uppercase; letter-spacing: .08em; background: color-mix(in srgb, var(--acc) 40%, var(--surface)); color: var(--heading); border: 1px solid color-mix(in srgb, var(--acc) 50%, transparent); }
+.week-num b { font-size: 1.4rem; line-height: 1; letter-spacing: 0; }
+.week.plain .week-head h2 { font-size: 1.4rem; }
+
+.days { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; margin: 18px 0; }
+.day { --dacc: var(--acc); position: relative; border-radius: 20px; padding: 16px 18px 14px; background: color-mix(in srgb, var(--dacc) 9%, var(--surface)); border: 1px solid color-mix(in srgb, var(--dacc) 30%, var(--line)); border-top: 5px solid var(--dacc); transition: transform .3s cubic-bezier(.2, .9, .3, 1.2), box-shadow .3s; }
+.day:hover { transform: translateY(-5px) rotate(-.25deg); box-shadow: var(--shadow); }
+.d-mon { --dacc: var(--blue); } .d-tue { --dacc: var(--aqua); } .d-wed { --dacc: var(--green); }
+.d-thu { --dacc: var(--yellow); } .d-fri { --dacc: var(--orange); } .d-sat { --dacc: var(--purple); } .d-sun { --dacc: var(--pink); }
+.day.bonus { grid-column: 1 / -1; --dacc: var(--pink); }
+.day header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.day h3 { margin: 0; font-size: 1.03rem; color: var(--heading); font-weight: 800; line-height: 1.3; }
+.day-badge { flex: none; display: inline-grid; place-items: center; min-width: 46px; height: 28px; padding: 0 10px; border-radius: 10px; font-weight: 900; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; background: var(--dacc); color: #2d3a35; }
+.d-sat .day-badge { color: #2a2340; }
+.day-badge.star { font-size: 1rem; }
+:root[data-theme="dark"] .day-badge, :root:not([data-theme="light"]) .day-badge { color: #1e1e2e; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .day-badge { color: #3b463f; } }
+
+/* lists */
+ul, ol { margin: 6px 0; }
+.day ul, .done ul, .stretch ul, .week-body > ul, .chapter > ul { list-style: none; padding: 0; }
+li { position: relative; }
+ul > li { padding: 3px 0 3px 20px; }
+ul > li::before { content: ""; position: absolute; left: 3px; top: .82em; width: 8px; height: 8px; border-radius: 50%; background: var(--dacc, var(--acc, var(--green))); transition: transform .25s; }
+ul > li:hover::before { transform: scale(1.5); }
+li > ul { margin: 4px 0 4px 0; }
+li.search { padding-left: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-left: 4px; }
+li.search::before { display: none; }
+.search-label { font-size: .68rem; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-right: 2px; }
+.chip { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .76rem; text-decoration: none; padding: 3px 10px; border-radius: 99px; color: color-mix(in srgb, var(--blue) 40%, var(--heading)); background: color-mix(in srgb, var(--blue) 16%, var(--surface)); border: 1px solid color-mix(in srgb, var(--blue) 30%, transparent); transition: transform .2s, background .2s, box-shadow .2s; line-height: 1.5; }
+a.chip:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--blue) 30%, var(--surface)); box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--blue) 70%, transparent); color: var(--heading); }
+.chip.plain { opacity: .85; }
+li.ref { margin: 8px 0; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, var(--pink) 14%, var(--surface)); border: 1px dashed color-mix(in srgb, var(--pink) 60%, transparent); font-size: .93rem; }
+li.ref::before { display: none; }
+.ref-tag { display: inline-block; font-size: .66rem; font-weight: 900; text-transform: uppercase; letter-spacing: .09em; padding: 2px 9px; border-radius: 99px; background: var(--pink); color: #4a2a3c; margin-right: 4px; vertical-align: 1px; }
+:root[data-theme="dark"] .ref-tag, :root:not([data-theme="light"]) .ref-tag { color: #1e1e2e; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .ref-tag { color: #4a2a3c; } }
+
+/* callouts */
+.deliverable { display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; padding: 16px 20px; margin: 4px 0 18px; border-radius: 20px; background: linear-gradient(120deg, color-mix(in srgb, var(--yellow) 30%, var(--surface)), color-mix(in srgb, var(--orange) 14%, var(--surface))); border: 1px solid color-mix(in srgb, var(--yellow) 55%, transparent); }
+.deliverable .tag { font-weight: 900; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; padding: 4px 12px; border-radius: 99px; background: var(--yellow); color: #4b4630; white-space: nowrap; }
+.deliverable p { margin: 0; flex: 1; min-width: 220px; color: var(--heading); font-weight: 600; }
+p.note { padding: 12px 16px; margin: 12px 0; border-radius: 14px; background: color-mix(in srgb, var(--blue) 10%, var(--surface)); border-left: 4px solid var(--blue); }
+p.ref-box { border-left-color: var(--pink); background: color-mix(in srgb, var(--pink) 12%, var(--surface)); }
+p.subhead { font-weight: 900; color: var(--heading); font-size: 1.05rem; margin: 22px 0 4px; }
+.chapter > p.subhead { margin-left: 6px; }
+
+.done, .stretch { margin: 18px 0; padding: 16px 20px 12px; border-radius: 22px; }
+.done { background: color-mix(in srgb, var(--green) 16%, var(--surface)); border: 1.5px solid color-mix(in srgb, var(--green) 50%, transparent); }
+.stretch { background: color-mix(in srgb, var(--purple) 14%, var(--surface)); border: 1.5px dashed color-mix(in srgb, var(--purple) 60%, transparent); }
+.done-head, .stretch-head { margin: 0 0 6px; font-weight: 800; color: var(--heading); }
+.count { float: right; font-size: .78rem; padding: 2px 10px; border-radius: 99px; background: var(--green); color: #25361f; font-weight: 900; }
+.done ul > li::before, .done li.check::before { display: none; }
+li.check { padding: 4px 0; }
+li.check label { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+li.check input { position: absolute; opacity: 0; pointer-events: none; }
+.box { flex: none; width: 24px; height: 24px; margin-top: 2px; border-radius: 8px; border: 2px solid color-mix(in srgb, var(--green) 70%, var(--text)); background: var(--surface); position: relative; transition: background .25s, transform .25s, border-color .25s; }
+.box::after { content: ""; position: absolute; left: 7px; top: 2px; width: 6px; height: 12px; border: solid #25361f; border-width: 0 3px 3px 0; transform: rotate(45deg) scale(0); transition: transform .25s cubic-bezier(.3, 1.8, .5, 1); }
+li.check label:hover .box { transform: scale(1.12) rotate(-4deg); }
+li.check input:focus-visible + .box { outline: 3px solid color-mix(in srgb, var(--blue) 60%, transparent); outline-offset: 2px; }
+li.check input:checked + .box { background: var(--green); border-color: var(--green); }
+li.check input:checked + .box::after { transform: rotate(45deg) scale(1); }
+li.check .txt { transition: color .3s, opacity .3s; }
+li.check input:checked ~ .txt { opacity: .6; text-decoration: line-through; text-decoration-color: var(--green); text-decoration-thickness: 2px; }
+.sparkle { position: fixed; pointer-events: none; z-index: 200; font-size: 16px; animation: spark .8s ease-out forwards; }
+@keyframes spark { from { opacity: 1; transform: translate(0, 0) scale(.6); } to { opacity: 0; transform: translate(var(--x), var(--y)) scale(1.3) rotate(120deg); } }
+
+.checkpoint { display: flex; gap: 14px; align-items: center; margin: 22px 0; padding: 18px 22px; border-radius: 22px; background: linear-gradient(110deg, color-mix(in srgb, var(--pink) 28%, var(--surface)), color-mix(in srgb, var(--yellow) 22%, var(--surface))); border: 1.5px solid color-mix(in srgb, var(--pink) 55%, transparent); }
+.checkpoint p { margin: 0; font-weight: 700; color: var(--heading); }
+.spark { font-size: 1.8rem; animation: wiggle 2.4s ease-in-out infinite; }
+@keyframes wiggle { 0%, 100% { transform: rotate(-10deg) scale(1); } 50% { transform: rotate(12deg) scale(1.15); } }
+
+/* tables */
+.table-wrap { overflow-x: auto; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); margin: 14px 0; box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: .93rem; min-width: 560px; }
+th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; padding: 13px 16px; background: color-mix(in srgb, var(--green) 22%, var(--surface)); color: var(--heading); }
+td { padding: 13px 16px; border-top: 1px solid var(--line); vertical-align: top; }
+tbody tr { transition: background .2s; }
+tbody tr:hover { background: color-mix(in srgb, var(--blue) 9%, var(--surface)); }
+a.watch { display: inline-block; text-decoration: none; font-weight: 800; font-size: .82rem; padding: 6px 14px; border-radius: 99px; background: var(--red); color: #4a2326; white-space: nowrap; transition: transform .2s, box-shadow .2s; }
+a.watch:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 8px 16px -8px var(--red); color: #4a2326; }
+:root[data-theme="dark"] a.watch, :root:not([data-theme="light"]) a.watch { color: #1e1e2e; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) a.watch { color: #4a2326; } }
+
+/* code */
+figure.code { position: relative; margin: 14px 0; }
+figure.code pre { margin: 0; padding: 20px 22px; border-radius: 20px; overflow-x: auto; background: var(--bg2); border: 1px solid var(--line); font-size: .86rem; line-height: 1.7; box-shadow: var(--shadow); }
+figure.code code { background: none; border: 0; padding: 0; color: var(--text); font-size: inherit; }
+.copy { position: absolute; top: 12px; right: 12px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--heading); font: 800 .75rem 'Nunito', sans-serif; padding: 5px 12px; border-radius: 99px; transition: transform .2s, background .2s; }
+.copy:hover { transform: translateY(-2px); background: var(--surface2); }
+
+/* resume chapter lists */
+.chapter.plain > ul { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 14px 20px 14px 22px; margin: 6px 0 18px; box-shadow: var(--shadow); }
+
+footer { text-align: center; color: var(--muted); font-weight: 700; padding: 10px 0 0; }
+footer span { display: inline-block; animation: bob 3s ease-in-out infinite; }
+
+/* reveal */
+.js .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s ease, transform .7s cubic-bezier(.2, .9, .3, 1.1); transition-delay: calc(var(--i, 0) * 70ms); }
+.js .reveal.in { opacity: 1; transform: none; }
+.js .day.reveal.in:hover { transform: translateY(-5px) rotate(-.25deg); transition-delay: 0s; transition-duration: .3s; }
+
+/* mobile */
+@media (max-width: 960px) {
+  .layout { grid-template-columns: 1fr; }
+  .menu-btn { display: block; }
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 300px; max-width: 86vw; transform: translateX(-105%); transition: transform .35s cubic-bezier(.2, .9, .3, 1); background: var(--bg2); box-shadow: var(--shadow); }
+  body.nav-open .sidebar { transform: none; }
+  body.nav-open .scrim { display: block; position: fixed; inset: 0; background: rgba(0, 0, 0, .3); z-index: 35; }
+  main { padding-top: 70px; }
+}
+@media (max-width: 520px) {
+  .days { grid-template-columns: 1fr; }
+  .phase-banner { padding: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .js .reveal { opacity: 1; transform: none; }
+}
+@media print {
+  .sidebar, .menu-btn, #readbar { display: none; }
+  .layout { display: block; }
+  .js .reveal { opacity: 1; transform: none; }
+}
+
+/* ===== v2: flat colors + neumorphism ===== */
+:root {
+  --bg: #efead4; --bg2: #efead4; --surface: #efead4; --surface2: #e8e3cb; --line: transparent;
+  --sh-d: #cdc7a8; --sh-l: #fffef2;
+  --raise: 9px 9px 20px var(--sh-d), -9px -9px 20px var(--sh-l);
+  --raise-sm: 6px 6px 13px var(--sh-d), -6px -6px 13px var(--sh-l);
+  --raise-xs: 3px 3px 7px var(--sh-d), -3px -3px 7px var(--sh-l);
+  --inset: inset 6px 6px 12px var(--sh-d), inset -6px -6px 12px var(--sh-l);
+  --inset-sm: inset 3px 3px 6px var(--sh-d), inset -3px -3px 6px var(--sh-l);
+  --shadow: var(--raise);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1e1e2e; --bg2: #1e1e2e; --surface: #1e1e2e; --surface2: #232336; --line: transparent;
+    --sh-d: #12121b; --sh-l: #2c2d44; --shadow: var(--raise);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1e1e2e; --bg2: #1e1e2e; --surface: #1e1e2e; --surface2: #232336; --line: transparent;
+  --sh-d: #12121b; --sh-l: #2c2d44; --shadow: var(--raise);
+}
+
+body::before { display: none; }
+#readbar { background: var(--green); }
+.blob, .phase-banner::after { display: none; }
+
+/* sidebar */
+.sidebar { background: var(--bg); border-right: 0; backdrop-filter: none; box-shadow: 8px 0 20px -8px var(--sh-d); }
+.brand .leaf { background: var(--green); box-shadow: var(--raise-xs); }
+.theme-btn, .menu-btn { background: var(--bg); border: 0; box-shadow: var(--raise-xs); }
+.theme-btn:hover { box-shadow: var(--raise-sm); }
+.theme-btn:active, .menu-btn:active { box-shadow: var(--inset-sm); }
+.prog-track { background: var(--bg); border: 0; box-shadow: var(--inset-sm); height: 11px; }
+.prog-fill { background: var(--green); }
+.toc-i, .toc-h { background: transparent; }
+.toc-i:hover { background: var(--bg); box-shadow: var(--raise-xs); transform: none; }
+.toc-i.active, .toc-h.active { background: var(--bg); box-shadow: var(--inset-sm); color: var(--heading); }
+.toc-i.active::before { left: 6px; }
+
+/* hero */
+.hero { background: var(--bg); border: 0; box-shadow: var(--raise); }
+.hero h1 { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: var(--heading); animation: none; }
+.eyebrow { background: var(--bg); border: 0; box-shadow: var(--raise-xs); }
+.meta-card { background: var(--bg); border: 0; backdrop-filter: none; box-shadow: var(--inset); }
+.meta-card:hover { transform: none; box-shadow: var(--inset); }
+.pill { box-shadow: var(--raise-xs); }
+
+/* chapters / phases */
+.phase-banner { background: var(--bg); border: 0; box-shadow: var(--raise); }
+.phase-num { background: var(--bg); border: 0; box-shadow: var(--inset-sm); }
+
+/* weeks & days */
+.week { background: var(--bg); border: 0; box-shadow: var(--raise); }
+.week::before { background: var(--acc); }
+.week-num { background: var(--bg); border: 0; box-shadow: var(--inset-sm); }
+.day { background: var(--bg); border: 0; box-shadow: var(--raise-sm); }
+.day:hover, .js .day.reveal.in:hover { transform: translateY(-3px); box-shadow: var(--raise); }
+.day-badge { box-shadow: var(--raise-xs); }
+
+/* chips, code, refs, notes */
+code { background: var(--bg); border: 0; box-shadow: var(--inset-sm); }
+.chip { background: var(--bg); border: 0; box-shadow: var(--raise-xs); }
+a.chip:hover { background: var(--bg); transform: translateY(-1px); box-shadow: var(--raise-sm); }
+a.chip:active { transform: none; box-shadow: var(--inset-sm); }
+li.ref { background: var(--bg); border: 0; box-shadow: var(--inset-sm); }
+p.note { background: var(--bg); border-left: 0; border-radius: 16px; box-shadow: inset 4px 0 0 var(--blue), var(--inset-sm); }
+p.ref-box { background: var(--bg); box-shadow: inset 4px 0 0 var(--pink), var(--inset-sm); }
+.deliverable { background: var(--bg); border: 0; box-shadow: var(--raise-sm); }
+.checkpoint { background: var(--bg); border: 0; box-shadow: var(--raise-sm); }
+
+/* done / stretch / checkboxes */
+.done, .stretch { background: var(--bg); border: 0; box-shadow: var(--inset); }
+.box { background: var(--bg); border: 0; box-shadow: var(--raise-xs); }
+li.check label:hover .box { transform: none; box-shadow: var(--raise-sm); }
+li.check input:checked + .box { background: var(--green); border: 0; box-shadow: var(--inset-sm); }
+
+/* tables, code blocks, buttons */
+.table-wrap { background: var(--bg); border: 0; box-shadow: var(--inset); }
+th { background: transparent; border-bottom: 2px solid var(--sh-d); }
+td { border-top: 1px solid color-mix(in srgb, var(--sh-d) 70%, transparent); }
+tbody tr:hover { background: color-mix(in srgb, var(--sh-d) 22%, transparent); }
+a.watch { background: var(--bg); color: color-mix(in srgb, var(--red) 70%, var(--heading)) !important; box-shadow: var(--raise-xs); }
+a.watch:hover { transform: translateY(-1px); box-shadow: var(--raise-sm); }
+a.watch:active { transform: none; box-shadow: var(--inset-sm); }
+figure.code pre { background: var(--bg); border: 0; box-shadow: var(--inset); }
+.copy { background: var(--bg); border: 0; box-shadow: var(--raise-xs); }
+.copy:hover { background: var(--bg); box-shadow: var(--raise-sm); }
+.copy:active { box-shadow: var(--inset-sm); transform: none; }
+.chapter.plain > ul { background: var(--bg); border: 0; box-shadow: var(--raise-sm); }
+
+@media (max-width: 960px) { .sidebar { background: var(--bg); } }
+</style>
+</head>
+<body>
+<div id="readbar"></div>
+<button class="menu-btn" id="menuBtn" aria-label="Open navigation">&#9776;</button>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><span class="leaf">&#127807;</span> Backend Plan</div>
+    <div class="side-tools">
+      <button class="theme-btn" id="themeBtn" aria-label="Toggle theme">&#9728;</button>
+      <div class="prog">
+        <div class="prog-label"><span>Checklist</span><span id="progText">0 / 0</span></div>
+        <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+      </div>
+    </div>
+    <nav id="toc">
+<div class="toc-group"><a class="toc-h" href="#top">Overview</a>
+<a class="toc-i" href="#how-to-read-this-file">How to read this file</a>
+<a class="toc-i" href="#reference-videos">Reference videos</a>
+<a class="toc-i" href="#rules-for-every-week">Rules for every week</a>
+</div>
+<div class="toc-group"><a class="toc-h" href="#phase-1-backend-core">Phase 1 &middot; Backend core</a>
+<a class="toc-i" href="#week-1"><small>W1</small> Node + TypeScript foundations</a>
+<a class="toc-i" href="#week-2"><small>W2</small> REST API with Fastify + Zod</a>
+<a class="toc-i" href="#week-3"><small>W3</small> SQL and PostgreSQL (no ORM yet)</a>
+<a class="toc-i" href="#week-4"><small>W4</small> Postgres in your API (ORM + migrations)</a>
+<a class="toc-i" href="#week-5"><small>W5</small> Auth, security, testing</a>
+</div>
+<div class="toc-group"><a class="toc-h" href="#phase-2-deployment-and-devops">Phase 2 &middot; Deployment and DevOps</a>
+<a class="toc-i" href="#week-6"><small>W6</small> Docker + Redis caching</a>
+<a class="toc-i" href="#week-7"><small>W7</small> CI/CD + live deployment</a>
+</div>
+<div class="toc-group"><a class="toc-h" href="#phase-3-ai-engineering">Phase 3 &middot; AI engineering</a>
+<a class="toc-i" href="#week-8"><small>W8</small> LLM APIs</a>
+<a class="toc-i" href="#week-9"><small>W9</small> Embeddings + RAG</a>
+</div>
+<div class="toc-group"><a class="toc-h" href="#phase-4-capstone-weeks-10-12">Phase 4 &middot; Capstone (Weeks 10-12)</a>
+<a class="toc-i" href="#week-10"><small>W10</small> Core</a>
+<a class="toc-i" href="#week-11"><small>W11</small> Hardening + deployment</a>
+<a class="toc-i" href="#week-12"><small>W12</small> Eval, polish, ship</a>
+</div>
+<div class="toc-group"><a class="toc-h" href="#resume-bullets-fill-in-real-numbers">Resume bullets (fill in real numbers)</a>
+</div>
+<div class="toc-group"><a class="toc-h" href="#weekly-journal-template">Weekly journal template</a>
+</div>
+    </nav>
+  </aside>
+  <main>
+<header class="hero" id="top" data-spy><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="hero-inner"><span class="eyebrow">&#127793; roadmap</span><h1>Backend Engineering Plan <span class="pill">12 Weeks</span></h1><div class="meta">
+<div class="meta-card reveal"><span class="meta-label">Goal</span><p>Two deployable, resume-ready backend projects:</p>
+<ol><li class="">A tested, containerized, CI/CD-deployed REST API</li><li class="">An AI document Q&amp;A service (RAG) with background jobs</li></ol>
+</div>
+<div class="meta-card reveal"><span class="meta-label">Stack</span><p>Node.js 24 (LTS) + TypeScript, Fastify 5, Zod 4, PostgreSQL, Drizzle (stable 0.45.x) or Prisma, Redis, Docker, GitHub Actions, pgvector, BullMQ.</p>
+</div>
+<div class="meta-card reveal"><span class="meta-label">Pace</span><p>~5 focused sprints (25 min each) Mon to Fri, a longer flow session on Saturday, Sunday off.</p>
+</div>
+</div></div></header>
+<section class="chapter intro" id="start">
+<section class="week plain reveal" id="how-to-read-this-file" data-spy><div class="week-head"><h2>How to read this file</h2></div><div class="week-body">
+<ul><li class="">Each day is a short list of tasks.</li><li class=""><strong>Search:</strong> lines are things to type into Google or YouTube (or the official docs).</li><li class="">Prefer official docs and short articles. Use YouTube for one concept at a time, not whole courses.</li></ul>
+</div></section>
+<section class="week plain reveal" id="reference-videos" data-spy><div class="week-head"><h2>Reference videos</h2></div><div class="week-body">
+<p>All three use Express + MongoDB + plain JavaScript. Your stack is Fastify + Postgres + TypeScript, so <strong>watch for the concepts, then rebuild in your stack.</strong> Don't switch to Mongo.</p>
+<div class="table-wrap reveal"><table><thead><tr><th>Video</th><th>Used in</th><th>Link</th></tr></thead><tbody><tr><td>Complete Authentication System (JWT, refresh token, OTP, logout all devices), Sheryians, ~2h43</td><td>Week 5</td><td><a class="watch" href="https://www.youtube.com/watch?v=pkKn8q5AvsY" target="_blank" rel="noopener">&#9654; Watch</a></td></tr><tr><td>Bank Transaction System (ledger, transactions, idempotency), Sheryians, ~4h</td><td>Week 4, Week 6, Bonus project</td><td><a class="watch" href="https://www.youtube.com/watch?v=NQOAQP0mow0" target="_blank" rel="noopener">&#9654; Watch</a></td></tr><tr><td>Complete Backend Course (subscription API), JavaScript Mastery, ~3h</td><td>Week 2, Week 7, Weeks 10-11</td><td><a class="watch" href="https://www.youtube.com/watch?v=rOpEN1JDaD0" target="_blank" rel="noopener">&#9654; Watch</a></td></tr></tbody></table></div>
+<p>How to use them:</p>
+<ul><li class="">Watch only the section named in the <code>Reference:</code> line. Use the video's chapter list in the YouTube description to jump to it.</li><li class="">Watch 5-10 minutes, pause, then build that part yourself. Don't type along line by line.</li><li class="">Change something (rename entities, add a field) so you're not just copying.</li><li class="">Skip frontend parts, Gmail/Google OAuth setup, and paid third-party services.</li></ul>
+</div></section>
+<section class="week plain reveal" id="rules-for-every-week" data-spy><div class="week-head"><h2>Rules for every week</h2></div><div class="week-body">
+<ul><li class=""><strong>Start rule:</strong> first sprint of the day is "open the editor and write one line."</li><li class=""><strong>Stop mid-task:</strong> end each day on something unfinished so tomorrow's first step is obvious.</li><li class=""><strong>AI rule:</strong> you write the code. AI reviews it, explains errors, or gives a hint after 15 min stuck.</li><li class=""><strong>Explain-it-back:</strong> after each concept, write 3 lines in your own words in <code>notes.md</code>.</li><li class=""><strong>Docs-first:</strong> if a tutorial and the official docs disagree, trust the docs. Check the library version in the tutorial matches yours (Zod, Fastify, Drizzle change fast).</li><li class=""><strong>Saturday:</strong> ship the deliverable, update the README, push to GitHub.</li><li class=""><strong>Falling behind:</strong> extend the plan. Never skip Weeks 3, 4, 5.</li></ul>
+</div></section>
+</section>
+<section class="chapter phase p1" id="phase-1-backend-core" data-spy><div class="phase-banner reveal"><span class="phase-num">Phase 1</span><h1>Backend core</h1></div>
+<section class="week reveal" id="week-1" data-spy><div class="week-head"><span class="week-num">Week <b>1</b></span><h2>Node + TypeScript foundations</h2></div><div class="week-body">
+<div class="deliverable reveal"><span class="tag">&#127919; Deliverable</span><p>JSON CRUD API (<code>/tasks</code>) using only <code>node:http</code>, in-memory data, on GitHub.</p></div>
+<div class="days">
+<article class="day reveal d-mon" style="--i:0"><header><span class="day-badge">Mon</span><h3>Setup + event loop</h3></header><div class="day-body">
+<ul><li class="">Install Node 24 with a version manager<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=install+node+with+nvm" target="_blank" rel="noopener">install node with nvm</a><a class="chip" href="https://www.google.com/search?q=fnm+node+version+manager" target="_blank" rel="noopener">fnm node version manager</a></li></ul></li><li class="">Create a TypeScript project (npm init, TypeScript, tsx, strict tsconfig)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node+typescript+setup+tsx+tsconfig+strict" target="_blank" rel="noopener">node typescript setup tsx tsconfig strict</a></li></ul></li><li class="">Add ESLint and Prettier<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=eslint+typescript+flat+config" target="_blank" rel="noopener">eslint typescript flat config</a><a class="chip" href="https://www.google.com/search?q=prettier+setup" target="_blank" rel="noopener">prettier setup</a></li></ul></li><li class="">Understand the event loop<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node.js+event+loop+explained" target="_blank" rel="noopener">node.js event loop explained</a></li></ul></li><li class="">Experiment: predict then run the output order of <code>setTimeout</code>, <code>Promise.then</code>, <code>process.nextTick</code><ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=nextTick+vs+promise+vs+setTimeout+order" target="_blank" rel="noopener">nextTick vs promise vs setTimeout order</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-tue" style="--i:1"><header><span class="day-badge">Tue</span><h3>Your first raw HTTP server</h3></header><div class="day-body">
+<ul><li class="">Create a server with <code>node:http</code><ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node+http+createServer+example" target="_blank" rel="noopener">node http createServer example</a></li></ul></li><li class="">Route manually by method + path<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node+http+routing+without+express" target="_blank" rel="noopener">node http routing without express</a></li></ul></li><li class="">Parse URL and query params<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node+URL+searchParams" target="_blank" rel="noopener">node URL searchParams</a></li></ul></li><li class="">Return JSON with the right headers<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=content-type+application%2Fjson+node+http" target="_blank" rel="noopener">content-type application/json node http</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-wed" style="--i:2"><header><span class="day-badge">Wed</span><h3>Request bodies + status codes</h3></header><div class="day-body">
+<ul><li class="">Read the request body from the stream<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node+http+read+request+body+stream" target="_blank" rel="noopener">node http read request body stream</a></li></ul></li><li class="">Parse JSON safely, return 400 on bad JSON<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=JSON.parse+try+catch+node+http+400" target="_blank" rel="noopener">JSON.parse try catch node http 400</a></li></ul></li><li class="">Return 404 for unknown routes</li><li class="">Learn the main status codes<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=http+status+codes+200+201+400+404+409+500" target="_blank" rel="noopener">http status codes 200 201 400 404 409 500</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-thu" style="--i:0"><header><span class="day-badge">Thu</span><h3>CRUD + error handling</h3></header><div class="day-body">
+<ul><li class="">Build in-memory CRUD for <code>/tasks</code> (use a <code>Map</code> or array)</li><li class="">Use async/await with proper error handling<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=async+await+error+handling+node+try+catch" target="_blank" rel="noopener">async await error handling node try catch</a></li></ul></li><li class="">Create a custom <code>HttpError</code> class<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=custom+error+class+typescript+extends+Error" target="_blank" rel="noopener">custom error class typescript extends Error</a></li></ul></li><li class="">Write one central error-handling function</li></ul>
+</div></article>
+<article class="day reveal d-fri" style="--i:1"><header><span class="day-badge">Fri</span><h3>Production basics</h3></header><div class="day-body">
+<ul><li class="">Load config from env vars<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node+--env-file" target="_blank" rel="noopener">node --env-file</a><a class="chip" href="https://www.google.com/search?q=process.env+typescript" target="_blank" rel="noopener">process.env typescript</a></li></ul></li><li class="">Graceful shutdown on SIGTERM<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node+graceful+shutdown+SIGTERM+server.close" target="_blank" rel="noopener">node graceful shutdown SIGTERM server.close</a></li></ul></li><li class="">Add simple request logging</li><li class="">Stream a file as a response<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node+fs+createReadStream+pipe+response" target="_blank" rel="noopener">node fs createReadStream pipe response</a><a class="chip" href="https://www.google.com/search?q=node+streams+explained" target="_blank" rel="noopener">node streams explained</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-sat" style="--i:2"><header><span class="day-badge">Sat</span><h3>Ship it</h3></header><div class="day-body">
+<ul><li class="">Test with <code>node:test</code> or curl scripts<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node%3Atest+runner" target="_blank" rel="noopener">node:test runner</a><a class="chip" href="https://www.google.com/search?q=curl+POST+json" target="_blank" rel="noopener">curl POST json</a></li></ul></li><li class="">Write a README with an endpoint list</li><li class="">Push to GitHub<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=git+init+add+commit+push+github" target="_blank" rel="noopener">git init add commit push github</a></li></ul></li></ul>
+</div></article>
+</div>
+<div class="done reveal"><p class="done-head">&#9989; Done when <span class="count"></span></p>
+<ul><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">All 4 CRUD methods return correct status codes (200, 201, 400, 404)</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">You can explain why <code>await</code> doesn't block other requests</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">You can explain why streams matter for big files</span></label></li></ul>
+</div>
+</div></section>
+<section class="week reveal" id="week-2" data-spy><div class="week-head"><span class="week-num">Week <b>2</b></span><h2>REST API with Fastify + Zod</h2></div><div class="week-body">
+<div class="deliverable reveal"><span class="tag">&#127919; Deliverable</span><p>Bookmarks API in Fastify with validation, central error handling, and clean folder structure.</p></div>
+<div class="days">
+<article class="day reveal d-mon" style="--i:0"><header><span class="day-badge">Mon</span><h3>Fastify basics</h3></header><div class="day-body">
+<ul><li class="">Set up Fastify v5 in TypeScript<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+typescript+quick+start" target="_blank" rel="noopener">fastify typescript quick start</a></li></ul></li><li class="">Rebuild your Week 1 routes in Fastify<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+routes+handlers" target="_blank" rel="noopener">fastify routes handlers</a></li></ul></li><li class="">Learn the request lifecycle and hooks<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+request+lifecycle+hooks" target="_blank" rel="noopener">fastify request lifecycle hooks</a></li></ul></li><li class="">Write down what the framework saves you from doing</li></ul>
+</div></article>
+<article class="day reveal d-tue" style="--i:1"><header><span class="day-badge">Tue</span><h3>Zod validation</h3></header><div class="day-body">
+<ul><li class="">Install Zod (latest, v4) and write schemas<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=zod+object+string+number+schema" target="_blank" rel="noopener">zod object string number schema</a></li></ul></li><li class="">Validate with <code>safeParse</code> inside handlers<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=zod+safeParse+vs+parse" target="_blank" rel="noopener">zod safeParse vs parse</a></li></ul></li><li class="">Get TypeScript types from schemas<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=zod+infer+typescript+types" target="_blank" rel="noopener">zod infer typescript types</a></li></ul></li><li class="">Validate query strings (they arrive as strings)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=zod+coerce+number+query+string" target="_blank" rel="noopener">zod coerce number query string</a></li></ul></li><li class="">Skim what changed from v3 to v4, so old tutorials don't confuse you<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=zod+4+migration+guide" target="_blank" rel="noopener">zod 4 migration guide</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-wed" style="--i:2"><header><span class="day-badge">Wed</span><h3>Error handling</h3></header><div class="day-body">
+<ul><li class="">Add a central error handler<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+setErrorHandler" target="_blank" rel="noopener">fastify setErrorHandler</a></li></ul></li><li class="">Create custom error classes (NotFound, Validation, etc.)</li><li class="">Turn Zod errors into clean 400 responses<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=zod+error+flatten+format" target="_blank" rel="noopener">zod error flatten format</a></li></ul></li><li class="">Use hooks for cross-cutting logic<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+onRequest+preHandler+hook" target="_blank" rel="noopener">fastify onRequest preHandler hook</a></li></ul></li><li class="ref"><span class="ref-tag">&#9654; reference</span> <a href="https://www.youtube.com/watch?v=rOpEN1JDaD0" target="_blank" rel="noopener">Subscription API video</a>, the centralized error middleware section. Watch the idea of one global error handler, then build it with Fastify's <code>setErrorHandler</code> (skip the Mongoose-specific error codes).</li></ul>
+</div></article>
+<article class="day reveal d-thu" style="--i:0"><header><span class="day-badge">Thu</span><h3>Structure + config</h3></header><div class="day-body">
+<ul><li class="">Split code into routes, handlers, services<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node+project+structure+routes+controllers+services" target="_blank" rel="noopener">node project structure routes controllers services</a></li></ul></li><li class="">Use plugins for encapsulation<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+plugins+encapsulation+fastify-plugin" target="_blank" rel="noopener">fastify plugins encapsulation fastify-plugin</a></li></ul></li><li class="">Build a config module that validates env vars with Zod and fails on startup if missing<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=validate+environment+variables+zod+node" target="_blank" rel="noopener">validate environment variables zod node</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-fri" style="--i:1"><header><span class="day-badge">Fri</span><h3>List endpoints</h3></header><div class="day-body">
+<ul><li class="">Pagination<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=REST+API+pagination+limit+offset" target="_blank" rel="noopener">REST API pagination limit offset</a></li></ul></li><li class="">Filtering and sorting via query params<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=REST+API+filtering+sorting+query+params" target="_blank" rel="noopener">REST API filtering sorting query params</a></li></ul></li><li class="">One consistent response shape<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=api+response+format+best+practices" target="_blank" rel="noopener">api response format best practices</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-sat" style="--i:2"><header><span class="day-badge">Sat</span><h3>Ship it</h3></header><div class="day-body">
+<ul><li class="">Create an HTTP request collection<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=vscode+REST+Client+.http+file" target="_blank" rel="noopener">vscode REST Client .http file</a><a class="chip" href="https://www.google.com/search?q=Bruno+API+client" target="_blank" rel="noopener">Bruno API client</a></li></ul></li><li class="">README with an endpoint table</li><li class="">Push to GitHub</li></ul>
+</div></article>
+</div>
+<div class="stretch reveal"><p class="stretch-head">&#10024; <strong>Stretch:</strong> Zod type provider for Fastify (check it supports Zod v4 first), OpenAPI docs.</p>
+<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+swagger+openapi" target="_blank" rel="noopener">fastify swagger openapi</a></li></ul>
+</div>
+<div class="done reveal"><p class="done-head">&#9989; Done when <span class="count"></span></p>
+<ul><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">Invalid input returns a clear 400 with field errors</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">Routes, handlers, services are separate</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">Server won't start if env vars are missing</span></label></li></ul>
+</div>
+</div></section>
+<section class="week reveal" id="week-3" data-spy><div class="week-head"><span class="week-num">Week <b>3</b></span><h2>SQL and PostgreSQL (no ORM yet)</h2></div><div class="week-body">
+<div class="deliverable reveal"><span class="tag">&#127919; Deliverable</span><p>Bookmarks schema in raw SQL: <code>schema.sql</code>, <code>seed.sql</code>, <code>queries.sql</code> (15+ queries).</p></div>
+<div class="days">
+<article class="day reveal d-mon" style="--i:0"><header><span class="day-badge">Mon</span><h3>Setup + basics</h3></header><div class="day-body">
+<ul><li class="">Run Postgres in Docker<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=run+postgres+in+docker" target="_blank" rel="noopener">run postgres in docker</a></li></ul></li><li class="">Learn <code>psql</code> commands<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=psql+cheat+sheet" target="_blank" rel="noopener">psql cheat sheet</a></li></ul></li><li class="">pgexercises: Basics and Joins<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=pgexercises" target="_blank" rel="noopener">pgexercises</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-tue" style="--i:1"><header><span class="day-badge">Tue</span><h3>Aggregates</h3></header><div class="day-body">
+<ul><li class="">GROUP BY and HAVING<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=sql+group+by+having+explained" target="_blank" rel="noopener">sql group by having explained</a></li></ul></li><li class="">COUNT, SUM, AVG</li><li class="">pgexercises: Aggregates</li></ul>
+</div></article>
+<article class="day reveal d-wed" style="--i:2"><header><span class="day-badge">Wed</span><h3>Advanced queries</h3></header><div class="day-body">
+<ul><li class="">Subqueries<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=sql+subquery+vs+join" target="_blank" rel="noopener">sql subquery vs join</a></li></ul></li><li class="">CTEs (WITH queries)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=postgres+CTE+with+clause" target="_blank" rel="noopener">postgres CTE with clause</a></li></ul></li><li class="">Window functions<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=sql+window+functions+explained" target="_blank" rel="noopener">sql window functions explained</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-thu" style="--i:0"><header><span class="day-badge">Thu</span><h3>Schema design</h3></header><div class="day-body">
+<ul><li class="">Design <code>users</code>, <code>bookmarks</code>, <code>tags</code>, <code>bookmark_tags</code> (many-to-many)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=many+to+many+relationship+sql+junction+table" target="_blank" rel="noopener">many to many relationship sql junction table</a></li></ul></li><li class="">Primary keys, foreign keys, NOT NULL, UNIQUE, CHECK<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=postgres+constraints+foreign+key+unique+check" target="_blank" rel="noopener">postgres constraints foreign key unique check</a></li></ul></li><li class="">UUID vs serial IDs<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=uuid+vs+serial+primary+key+postgres" target="_blank" rel="noopener">uuid vs serial primary key postgres</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-fri" style="--i:1"><header><span class="day-badge">Fri</span><h3>Indexes + transactions</h3></header><div class="day-body">
+<ul><li class="">How indexes work<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=database+index+explained+b-tree" target="_blank" rel="noopener">database index explained b-tree</a></li></ul></li><li class="">Read a query plan, add an index, compare<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=postgres+explain+analyze" target="_blank" rel="noopener">postgres explain analyze</a></li></ul></li><li class="">Transactions (BEGIN, COMMIT, ROLLBACK)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=sql+transactions+acid+explained" target="_blank" rel="noopener">sql transactions acid explained</a></li></ul></li><li class="">Isolation levels (just the idea)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=postgres+transaction+isolation+levels" target="_blank" rel="noopener">postgres transaction isolation levels</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-sat" style="--i:2"><header><span class="day-badge">Sat</span><h3>Write the files</h3></header><div class="day-body">
+<ul><li class=""><code>schema.sql</code></li><li class=""><code>seed.sql</code> with 1000+ rows<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=postgres+generate_series+insert+test+data" target="_blank" rel="noopener">postgres generate_series insert test data</a></li></ul></li><li class=""><code>queries.sql</code> with 15+ queries</li><li class="">Save before/after EXPLAIN output in your notes</li></ul>
+</div></article>
+</div>
+<div class="done reveal"><p class="done-head">&#9989; Done when <span class="count"></span></p>
+<ul><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">You can write a 3-table JOIN from memory</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">You've seen a Seq Scan become an Index Scan</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">You can explain what a transaction guarantees</span></label></li></ul>
+</div>
+</div></section>
+<section class="week reveal" id="week-4" data-spy><div class="week-head"><span class="week-num">Week <b>4</b></span><h2>Postgres in your API (ORM + migrations)</h2></div><div class="week-body">
+<div class="deliverable reveal"><span class="tag">&#127919; Deliverable</span><p>Bookmarks API fully on Postgres with migrations. No in-memory data left.</p></div>
+<p class="note"><strong>ORM choice:</strong> Drizzle on the stable 0.45.x line, or Prisma. Check the official docs version before following any tutorial (Drizzle 1.0 is still pre-release and changes the relations API and migrations).</p>
+<div class="days">
+<article class="day reveal d-mon" style="--i:0"><header><span class="day-badge">Mon</span><h3>ORM setup</h3></header><div class="day-body">
+<ul><li class="">Install ORM and a Postgres driver<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=drizzle+orm+postgres+getting+started" target="_blank" rel="noopener">drizzle orm postgres getting started</a></li></ul></li><li class="">Define the schema in TypeScript<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=drizzle+pgTable+schema" target="_blank" rel="noopener">drizzle pgTable schema</a></li></ul></li><li class="">Generate and run the first migration<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=drizzle-kit+generate+migrate" target="_blank" rel="noopener">drizzle-kit generate migrate</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-tue" style="--i:1"><header><span class="day-badge">Tue</span><h3>Queries</h3></header><div class="day-body">
+<ul><li class="">Insert, select, update, delete<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=drizzle+select+insert+update+delete" target="_blank" rel="noopener">drizzle select insert update delete</a></li></ul></li><li class="">Joins and relations<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=drizzle+joins+relational+queries" target="_blank" rel="noopener">drizzle joins relational queries</a></li></ul></li><li class="">Compare generated SQL with your Week 3 SQL<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=drizzle+logger+show+sql" target="_blank" rel="noopener">drizzle logger show sql</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-wed" style="--i:2"><header><span class="day-badge">Wed</span><h3>Swap the data layer</h3></header><div class="day-body">
+<ul><li class="">Replace in-memory services with DB calls</li><li class="">Keep handlers and Zod schemas unchanged (this is why you layered in Week 2)</li><li class="">Connection pooling basics<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node+postgres+connection+pool" target="_blank" rel="noopener">node postgres connection pool</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-thu" style="--i:0"><header><span class="day-badge">Thu</span><h3>Transactions + errors</h3></header><div class="day-body">
+<ul><li class="">Create a bookmark and its tags atomically<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=drizzle+transactions" target="_blank" rel="noopener">drizzle transactions</a></li></ul></li><li class="">Catch unique and foreign key violations<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=postgres+error+code+23505+unique+violation+node" target="_blank" rel="noopener">postgres error code 23505 unique violation node</a></li></ul></li><li class="">Map DB errors to 409 / 404</li><li class="ref"><span class="ref-tag">&#9654; reference</span> <a href="https://www.youtube.com/watch?v=NQOAQP0mow0" target="_blank" rel="noopener">Bank ledger video</a>, the sections on ACID transactions and the transfer flow. Watch the concepts only (atomic multi-step writes, why they roll back together), then do it with Drizzle/Postgres transactions.<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=postgres+transaction+rollback+example" target="_blank" rel="noopener">postgres transaction rollback example</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-fri" style="--i:1"><header><span class="day-badge">Fri</span><h3>Performance</h3></header><div class="day-body">
+<ul><li class="">Spot an N+1 query<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=N%2B1+query+problem+explained" target="_blank" rel="noopener">N+1 query problem explained</a></li></ul></li><li class="">Cursor pagination<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=cursor+pagination+vs+offset" target="_blank" rel="noopener">cursor pagination vs offset</a></li></ul></li><li class="">Add indexes your queries need and prove it with EXPLAIN</li></ul>
+</div></article>
+<article class="day reveal d-sat" style="--i:2"><header><span class="day-badge">Sat</span><h3>Ship it</h3></header><div class="day-body">
+<ul><li class="">Seed script<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=drizzle+seed+script" target="_blank" rel="noopener">drizzle seed script</a></li></ul></li><li class="">Document migration commands in README</li><li class="">Fresh-DB test: drop everything, migrate, seed, run</li></ul>
+</div></article>
+</div>
+<div class="done reveal"><p class="done-head">&#9989; Done when <span class="count"></span></p>
+<ul><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">Migrations run from scratch on an empty DB</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">At least one write uses a transaction</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">You can explain N+1 using an example from your own code</span></label></li></ul>
+</div>
+</div></section>
+<section class="week reveal" id="week-5" data-spy><div class="week-head"><span class="week-num">Week <b>5</b></span><h2>Auth, security, testing</h2></div><div class="week-body">
+<div class="deliverable reveal"><span class="tag">&#127919; Deliverable</span><p>Multi-user API where users only see their own data, with 10+ tests.</p></div>
+<div class="days">
+<article class="day reveal d-mon" style="--i:0"><header><span class="day-badge">Mon</span><h3>Passwords</h3></header><div class="day-body">
+<ul><li class="">Hash passwords with argon2 (or bcrypt)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=argon2+node+password+hashing" target="_blank" rel="noopener">argon2 node password hashing</a></li></ul></li><li class="">Understand salting and why plain text is never okay<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=why+hash+and+salt+passwords" target="_blank" rel="noopener">why hash and salt passwords</a></li></ul></li><li class="">Build <code>/register</code></li></ul>
+</div></article>
+<article class="day reveal d-tue" style="--i:1"><header><span class="day-badge">Tue</span><h3>Login + tokens</h3></header><div class="day-body">
+<ul><li class="">How JWTs work<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=JWT+explained" target="_blank" rel="noopener">JWT explained</a></li></ul></li><li class="">JWT vs sessions<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=jwt+vs+session+authentication" target="_blank" rel="noopener">jwt vs session authentication</a></li></ul></li><li class="">Refresh token flow (read about it, implement if time)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=access+token+refresh+token+flow" target="_blank" rel="noopener">access token refresh token flow</a></li></ul></li><li class="">Build <code>/login</code><ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+jwt+authentication" target="_blank" rel="noopener">fastify jwt authentication</a></li></ul></li><li class="">Write your choice and reasoning in <code>notes.md</code></li><li class="ref"><span class="ref-tag">&#9654; reference</span> <a href="https://www.youtube.com/watch?v=pkKn8q5AvsY" target="_blank" rel="noopener">Auth system video</a>, the sections on access vs refresh tokens, token hijacking, and the refresh endpoint with rotation. Watch for the idea (short-lived access token, long-lived refresh token in an httpOnly cookie, rotate on every refresh), then build it yourself in Fastify.<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=refresh+token+rotation+explained" target="_blank" rel="noopener">refresh token rotation explained</a><a class="chip" href="https://www.google.com/search?q=httpOnly+cookie+samesite" target="_blank" rel="noopener">httpOnly cookie samesite</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-wed" style="--i:2"><header><span class="day-badge">Wed</span><h3>Authorization</h3></header><div class="day-body">
+<ul><li class="">Auth hook that protects routes</li><li class="">Every query filters by the logged-in user's ID</li><li class="">Authentication vs authorization<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=authentication+vs+authorization" target="_blank" rel="noopener">authentication vs authorization</a></li></ul></li><li class="">Broken access control (the bug you're preventing)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=IDOR+vulnerability+explained" target="_blank" rel="noopener">IDOR vulnerability explained</a></li></ul></li><li class="ref"><span class="ref-tag">&#9654; reference</span> <a href="https://www.youtube.com/watch?v=pkKn8q5AvsY" target="_blank" rel="noopener">Auth system video</a>, the sections on the Session model, logout, and "logout from all devices". Build a <code>sessions</code> table in Postgres (user, hashed refresh token, ip, user agent, revoked flag), then a <code>logout</code> and a <code>logout-all</code> endpoint.<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=multi+device+session+management+database+design" target="_blank" rel="noopener">multi device session management database design</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-thu" style="--i:0"><header><span class="day-badge">Thu</span><h3>Security hardening</h3></header><div class="day-body">
+<ul><li class="">Rate limit login attempts<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+rate+limit" target="_blank" rel="noopener">fastify rate limit</a></li></ul></li><li class="">Security headers<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+helmet+security+headers" target="_blank" rel="noopener">fastify helmet security headers</a></li></ul></li><li class="">CORS<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=CORS+explained" target="_blank" rel="noopener">CORS explained</a></li></ul></li><li class="">Map 3 OWASP Top 10 items to your API<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=OWASP+top+10" target="_blank" rel="noopener">OWASP top 10</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-fri" style="--i:1"><header><span class="day-badge">Fri</span><h3>Test setup</h3></header><div class="day-body">
+<ul><li class="">Vitest basics<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=vitest+getting+started" target="_blank" rel="noopener">vitest getting started</a></li></ul></li><li class="">Test Fastify without a real server<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+inject+testing" target="_blank" rel="noopener">fastify inject testing</a></li></ul></li><li class="">Separate test database, fixtures, cleanup between tests<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=vitest+postgres+test+database+setup" target="_blank" rel="noopener">vitest postgres test database setup</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-sat" style="--i:2"><header><span class="day-badge">Sat</span><h3>Write 10+ tests</h3></header><div class="day-body">
+<ul><li class="">Register and login</li><li class="">Wrong password</li><li class="">Missing and invalid token</li><li class="">User A can't read, edit, or delete User B's data</li><li class="">Validation failures</li></ul>
+</div></article>
+</div>
+<div class="stretch reveal"><p class="stretch-head">&#10024; <strong>Stretch (optional): email OTP verification</strong></p>
+<ul><li class="ref"><span class="ref-tag">&#9654; reference</span> <a href="https://www.youtube.com/watch?v=pkKn8q5AvsY" target="_blank" rel="noopener">Auth system video</a>, the OTP architecture and email verification sections. Skip the Gmail OAuth2 setup and just log the OTP to the console while building.</li><li class="">The video hashes OTPs with a plain hash. A 6-digit code has very little entropy, so in your version also add a short expiry (5-10 min), a limit on wrong attempts, and an HMAC with a server secret.<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=OTP+verification+flow+design" target="_blank" rel="noopener">OTP verification flow design</a><a class="chip" href="https://www.google.com/search?q=hmac+vs+sha256+hash" target="_blank" rel="noopener">hmac vs sha256 hash</a></li></ul></li></ul>
+</div>
+<div class="done reveal"><p class="done-head">&#9989; Done when <span class="count"></span></p>
+<ul><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">A test proves ownership isolation</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">Passwords hashed; JWT secret from env</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt"><code>npm test</code> passes with 10+ tests</span></label></li></ul>
+</div>
+</div></section>
+</section>
+<section class="chapter phase p2" id="phase-2-deployment-and-devops" data-spy><div class="phase-banner reveal"><span class="phase-num">Phase 2</span><h1>Deployment and DevOps</h1></div>
+<section class="week reveal" id="week-6" data-spy><div class="week-head"><span class="week-num">Week <b>6</b></span><h2>Docker + Redis caching</h2></div><div class="week-body">
+<div class="deliverable reveal"><span class="tag">&#127919; Deliverable</span><p><code>docker compose up</code> starts app + Postgres + Redis on a fresh clone. One endpoint uses caching.</p></div>
+<div class="days">
+<article class="day reveal d-mon" style="--i:0"><header><span class="day-badge">Mon</span><h3>Dockerfile</h3></header><div class="day-body">
+<ul><li class="">Write a Dockerfile for a Node app<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=dockerfile+node+typescript" target="_blank" rel="noopener">dockerfile node typescript</a></li></ul></li><li class="">Multi-stage builds<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=docker+multi+stage+build+node" target="_blank" rel="noopener">docker multi stage build node</a></li></ul></li><li class=""><code>.dockerignore</code><ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=dockerignore+node" target="_blank" rel="noopener">dockerignore node</a></li></ul></li><li class="">Understand image layers<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=docker+layers+cache+explained" target="_blank" rel="noopener">docker layers cache explained</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-tue" style="--i:1"><header><span class="day-badge">Tue</span><h3>Docker Compose</h3></header><div class="day-body">
+<ul><li class="">App + Postgres in one compose file<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=docker+compose+node+postgres" target="_blank" rel="noopener">docker compose node postgres</a></li></ul></li><li class="">Volumes (so data survives restarts)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=docker+volumes+explained" target="_blank" rel="noopener">docker volumes explained</a></li></ul></li><li class="">Env files and networking<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=docker+compose+env+file+networks" target="_blank" rel="noopener">docker compose env file networks</a></li></ul></li><li class="">Run migrations on startup</li></ul>
+</div></article>
+<article class="day reveal d-wed" style="--i:2"><header><span class="day-badge">Wed</span><h3>Redis + caching</h3></header><div class="day-body">
+<ul><li class="">Add Redis to compose<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=docker+compose+redis" target="_blank" rel="noopener">docker compose redis</a></li></ul></li><li class="">Connect from Node<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=ioredis+node+getting+started" target="_blank" rel="noopener">ioredis node getting started</a></li></ul></li><li class="">Cache-aside pattern<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=cache+aside+pattern+explained" target="_blank" rel="noopener">cache aside pattern explained</a></li></ul></li><li class="">TTLs<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=redis+SET+EX+expire" target="_blank" rel="noopener">redis SET EX expire</a></li></ul></li><li class="ref"><span class="ref-tag">&#9654; reference</span> <a href="https://www.youtube.com/watch?v=NQOAQP0mow0" target="_blank" rel="noopener">Bank ledger video</a>, the secure logout and token blacklisting section. The idea is to store logged-out tokens with an expiry so they clean themselves up. Mongo does this with a TTL index; you'll do it with a Redis key that has a TTL.<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=jwt+blacklist+redis+ttl+logout" target="_blank" rel="noopener">jwt blacklist redis ttl logout</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-thu" style="--i:0"><header><span class="day-badge">Thu</span><h3>Invalidation + measuring</h3></header><div class="day-body">
+<ul><li class="">Invalidate or update cache on writes<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=cache+invalidation+strategies" target="_blank" rel="noopener">cache invalidation strategies</a></li></ul></li><li class="">Design cache keys (include user ID)</li><li class="">Measure latency with and without cache<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=autocannon+node+benchmark" target="_blank" rel="noopener">autocannon node benchmark</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-fri" style="--i:1"><header><span class="day-badge">Fri</span><h3>Hardening</h3></header><div class="day-body">
+<ul><li class="">Healthchecks and <code>depends_on</code><ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=docker+compose+healthcheck+depends_on+service_healthy" target="_blank" rel="noopener">docker compose healthcheck depends_on service_healthy</a></li></ul></li><li class="">Run as non-root<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=docker+node+non+root+user" target="_blank" rel="noopener">docker node non root user</a></li></ul></li><li class="">Shrink the image<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=reduce+docker+image+size+node+alpine" target="_blank" rel="noopener">reduce docker image size node alpine</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-sat" style="--i:2"><header><span class="day-badge">Sat</span><h3>Fresh-clone test</h3></header><div class="day-body">
+<ul><li class="">Delete everything, <code>git clone</code>, <code>docker compose up</code>, hit the API</li><li class="">Update README</li></ul>
+</div></article>
+</div>
+<div class="done reveal"><p class="done-head">&#9989; Done when <span class="count"></span></p>
+<ul><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">One command brings up the whole stack</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">You can show cache hit vs miss timing</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">You can explain what happens when cached data goes stale</span></label></li></ul>
+</div>
+</div></section>
+<section class="week reveal" id="week-7" data-spy><div class="week-head"><span class="week-num">Week <b>7</b></span><h2>CI/CD + live deployment</h2></div><div class="week-body">
+<div class="deliverable reveal"><span class="tag">&#127919; Deliverable</span><p>Push to <code>main</code>, and it lints, tests, builds, and deploys automatically. Live URL in README.</p></div>
+<div class="days">
+<article class="day reveal d-mon" style="--i:0"><header><span class="day-badge">Mon</span><h3>First workflow</h3></header><div class="day-body">
+<ul><li class="">GitHub Actions basics<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=github+actions+node.js+ci+workflow" target="_blank" rel="noopener">github actions node.js ci workflow</a></li></ul></li><li class="">Run lint, typecheck, test on push and PR</li><li class="">Understand jobs, steps, runners<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=github+actions+jobs+steps+runners+explained" target="_blank" rel="noopener">github actions jobs steps runners explained</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-tue" style="--i:1"><header><span class="day-badge">Tue</span><h3>Services in CI</h3></header><div class="day-body">
+<ul><li class="">Postgres as a service container<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=github+actions+postgres+service+container" target="_blank" rel="noopener">github actions postgres service container</a></li></ul></li><li class="">Redis service container</li><li class="">Cache dependencies<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=github+actions+cache+npm" target="_blank" rel="noopener">github actions cache npm</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-wed" style="--i:2"><header><span class="day-badge">Wed</span><h3>Build + push image</h3></header><div class="day-body">
+<ul><li class="">Build Docker image in CI<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=github+actions+docker+build" target="_blank" rel="noopener">github actions docker build</a></li></ul></li><li class="">Push to GitHub Container Registry<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=github+actions+push+ghcr.io" target="_blank" rel="noopener">github actions push ghcr.io</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-thu" style="--i:0"><header><span class="day-badge">Thu</span><h3>Pick a host + manual deploy</h3></header><div class="day-body">
+<ul><li class="">Check current free tiers first, then pick one: Fly.io, Render, or Railway<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=deploy+node+docker+fly.io" target="_blank" rel="noopener">deploy node docker fly.io</a><a class="chip" href="https://www.google.com/search?q=render+deploy+node+app" target="_blank" rel="noopener">render deploy node app</a><a class="chip" href="https://www.google.com/search?q=railway+deploy+node" target="_blank" rel="noopener">railway deploy node</a></li></ul></li><li class="">Set secrets and env vars on the host</li><li class="">Deploy manually once</li><li class="">Managed Postgres on the host<ul><li class="search"><span class="search-label">search</span><span class="chip plain">managed postgres [host name]</span></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-fri" style="--i:1"><header><span class="day-badge">Fri</span><h3>Automate</h3></header><div class="day-body">
+<ul><li class="">Deploy from Actions on merge to <code>main</code><ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=github+actions+deploy+on+push+to+main" target="_blank" rel="noopener">github actions deploy on push to main</a></li></ul></li><li class="">GitHub secrets<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=github+actions+secrets" target="_blank" rel="noopener">github actions secrets</a></li></ul></li><li class="">Add a <code>/health</code> endpoint<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=health+check+endpoint+best+practices" target="_blank" rel="noopener">health check endpoint best practices</a></li></ul></li><li class="">Structured JSON logging<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+logger+pino" target="_blank" rel="noopener">fastify logger pino</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-sat" style="--i:2"><header><span class="day-badge">Sat</span><h3>End-to-end</h3></header><div class="day-body">
+<ul><li class="">Push a change, watch tests then deploy, confirm live</li><li class="">Add CI badge and live URL to README<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=github+actions+status+badge" target="_blank" rel="noopener">github actions status badge</a></li></ul></li></ul>
+</div></article>
+</div>
+<div class="stretch reveal"><p class="stretch-head">&#10024; <strong>Stretch:</strong> deploy the same image to a plain VPS with SSH and a reverse proxy.</p>
+<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=deploy+docker+app+to+vps+nginx+reverse+proxy" target="_blank" rel="noopener">deploy docker app to vps nginx reverse proxy</a></li><li class="ref"><span class="ref-tag">&#9654; reference</span> <a href="https://www.youtube.com/watch?v=rOpEN1JDaD0" target="_blank" rel="noopener">Subscription API video</a>, the production VPS deployment section (SSH into Ubuntu, install Node, PM2, clone from GitHub, run live). You'll use Docker instead of PM2, but the server-side steps are the same.<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=ssh+into+ubuntu+vps" target="_blank" rel="noopener">ssh into ubuntu vps</a><a class="chip" href="https://www.google.com/search?q=pm2+process+manager+node" target="_blank" rel="noopener">pm2 process manager node</a></li></ul></li></ul>
+</div>
+<div class="done reveal"><p class="done-head">&#9989; Done when <span class="count"></span></p>
+<ul><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">A failing test blocks deployment</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">No secrets in the repo or image</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">Live URL works and <code>/health</code> returns OK</span></label></li></ul>
+</div>
+<aside class="checkpoint reveal"><span class="spark">&#127881;</span><p><strong>Checkpoint:</strong> Project 1 is resume-ready. Add it today.</p></aside>
+<div class="days">
+<article class="day reveal bonus" style="--i:0"><header><span class="day-badge star">&#10024;</span><h3>Bonus project (optional, after Week 7): Postgres ledger</h3></header><div class="day-body">
+<p>A small money-transfer API that teaches correctness under concurrency. It's a strong interview talking point, but don't start it until Projects 1 and 2 are on track.</p>
+<p class="note ref-box"><strong>Reference:</strong> <a href="https://www.youtube.com/watch?v=NQOAQP0mow0" target="_blank" rel="noopener">Bank ledger video</a>, the double-entry ledger, balance derivation, transfer flow, and idempotency sections. Skip Mongo specifics, NodeMailer, and the Render deploy.</p>
+<ul><li class="">Model it in Postgres: <code>accounts</code>, <code>transactions</code>, and an append-only <code>ledger_entries</code> table (debit/credit rows)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=double+entry+bookkeeping+database+design" target="_blank" rel="noopener">double entry bookkeeping database design</a></li></ul></li><li class="">Compute balances from ledger entries with SQL (<code>SUM</code> with <code>CASE</code>), never store a mutable balance field</li><li class="">Make ledger rows immutable<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=postgres+prevent+update+delete+trigger" target="_blank" rel="noopener">postgres prevent update delete trigger</a></li></ul></li><li class="">Write the transfer as one transaction, locking rows<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=postgres+select+for+update" target="_blank" rel="noopener">postgres select for update</a></li></ul></li><li class="">Add idempotency: a unique constraint on the idempotency key so a retried request can't double-charge<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=idempotency+key+api+design" target="_blank" rel="noopener">idempotency key api design</a></li></ul></li><li class="">Write concurrency tests: two simultaneous transfers from the same account must never overdraw it</li><li class="">Reuse your auth, Docker, and CI from Project 1</li></ul>
+</div></article>
+</div>
+</div></section>
+</section>
+<section class="chapter phase p3" id="phase-3-ai-engineering" data-spy><div class="phase-banner reveal"><span class="phase-num">Phase 3</span><h1>AI engineering</h1></div>
+<section class="week reveal" id="week-8" data-spy><div class="week-head"><span class="week-num">Week <b>8</b></span><h2>LLM APIs</h2></div><div class="week-body">
+<div class="deliverable reveal"><span class="tag">&#127919; Deliverable</span><p>A new service with (1) text in, validated structured JSON out and (2) a streaming chat endpoint.</p></div>
+<div class="days">
+<article class="day reveal d-mon" style="--i:0"><header><span class="day-badge">Mon</span><h3>First call</h3></header><div class="day-body">
+<ul><li class="">Pick a provider, read its official quickstart<ul><li class="search"><span class="search-label">search</span><span class="chip plain">[provider] API quickstart node</span></li></ul></li><li class="">Keep API key in env, never in code</li><li class="">Learn tokens, context window, temperature, system prompt<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=LLM+tokens+context+window+explained" target="_blank" rel="noopener">LLM tokens context window explained</a><a class="chip" href="https://www.google.com/search?q=LLM+temperature+explained" target="_blank" rel="noopener">LLM temperature explained</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-tue" style="--i:1"><header><span class="day-badge">Tue</span><h3>Structured output</h3></header><div class="day-body">
+<ul><li class="">Get JSON out of an LLM<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=LLM+structured+output+json+schema" target="_blank" rel="noopener">LLM structured output json schema</a></li></ul></li><li class="">Validate with Zod, retry once if invalid</li><li class="">Turn a Zod schema into JSON Schema<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=zod+toJSONSchema" target="_blank" rel="noopener">zod toJSONSchema</a></li></ul></li><li class="">Check your provider's native structured-output feature</li></ul>
+</div></article>
+<article class="day reveal d-wed" style="--i:2"><header><span class="day-badge">Wed</span><h3>Streaming</h3></header><div class="day-body">
+<ul><li class="">Server-sent events<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=server+sent+events+explained" target="_blank" rel="noopener">server sent events explained</a></li></ul></li><li class="">SSE from Fastify<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+server+sent+events" target="_blank" rel="noopener">fastify server sent events</a></li></ul></li><li class="">Stream LLM tokens to curl<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=LLM+streaming+response+node" target="_blank" rel="noopener">LLM streaming response node</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-thu" style="--i:0"><header><span class="day-badge">Thu</span><h3>Tool calling</h3></header><div class="day-body">
+<ul><li class="">Define a tool the model can call<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=LLM+function+calling+tool+use+explained" target="_blank" rel="noopener">LLM function calling tool use explained</a></li></ul></li><li class="">Run the tool, feed the result back to the model</li><li class="">Build a tiny example (e.g. get_weather with fake data)</li></ul>
+</div></article>
+<article class="day reveal d-fri" style="--i:1"><header><span class="day-badge">Fri</span><h3>Reliability</h3></header><div class="day-body">
+<ul><li class="">Timeouts<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node+fetch+timeout+AbortController" target="_blank" rel="noopener">node fetch timeout AbortController</a></li></ul></li><li class="">Retries with backoff<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=exponential+backoff+retry" target="_blank" rel="noopener">exponential backoff retry</a></li></ul></li><li class="">Handle 429 and 5xx errors</li><li class="">Log token usage per request</li><li class="">Cache identical prompts</li></ul>
+</div></article>
+<article class="day reveal d-sat" style="--i:2"><header><span class="day-badge">Sat</span><h3>Tests + README</h3></header><div class="day-body">
+<ul><li class="">Mock the LLM client in tests<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=vitest+mock+module" target="_blank" rel="noopener">vitest mock module</a></li></ul></li><li class="">Make sure CI never calls a paid API</li><li class="">README</li></ul>
+</div></article>
+</div>
+<div class="done reveal"><p class="done-head">&#9989; Done when <span class="count"></span></p>
+<ul><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">Structured endpoint never returns malformed JSON</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">Streaming works from the terminal</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">CI never hits a paid API</span></label></li></ul>
+</div>
+</div></section>
+<section class="week reveal" id="week-9" data-spy><div class="week-head"><span class="week-num">Week <b>9</b></span><h2>Embeddings + RAG</h2></div><div class="week-body">
+<div class="deliverable reveal"><span class="tag">&#127919; Deliverable</span><p>Upload a document, ask questions, get answers with citations. Vectors in Postgres via pgvector.</p></div>
+<div class="days">
+<article class="day reveal d-mon" style="--i:0"><header><span class="day-badge">Mon</span><h3>Embeddings</h3></header><div class="day-body">
+<ul><li class="">What embeddings are<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=what+are+embeddings+explained" target="_blank" rel="noopener">what are embeddings explained</a></li></ul></li><li class="">Cosine similarity<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=cosine+similarity+explained" target="_blank" rel="noopener">cosine similarity explained</a></li></ul></li><li class="">Embed 5 sentences and see which are closest</li></ul>
+</div></article>
+<article class="day reveal d-tue" style="--i:1"><header><span class="day-badge">Tue</span><h3>pgvector</h3></header><div class="day-body">
+<ul><li class="">Set up pgvector (read its README)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=pgvector+getting+started" target="_blank" rel="noopener">pgvector getting started</a></li></ul></li><li class="">Store vectors, run nearest-neighbour queries</li><li class="">Indexes: HNSW vs IVFFlat<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=pgvector+hnsw+vs+ivfflat" target="_blank" rel="noopener">pgvector hnsw vs ivfflat</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-wed" style="--i:2"><header><span class="day-badge">Wed</span><h3>Ingestion</h3></header><div class="day-body">
+<ul><li class="">Extract text from PDF or text files<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=node+pdf+text+extraction" target="_blank" rel="noopener">node pdf text extraction</a></li></ul></li><li class="">Chunking with overlap<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=text+chunking+strategies+RAG" target="_blank" rel="noopener">text chunking strategies RAG</a></li></ul></li><li class="">Store chunks with metadata (doc ID, page, index)</li></ul>
+</div></article>
+<article class="day reveal d-thu" style="--i:0"><header><span class="day-badge">Thu</span><h3>Retrieval + answering</h3></header><div class="day-body">
+<ul><li class="">Embed the question, fetch top-k chunks<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=RAG+with+pgvector+node" target="_blank" rel="noopener">RAG with pgvector node</a></li></ul></li><li class="">Build the prompt with context</li><li class="">Return citations</li><li class="">If the answer isn't in the context, say so<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=reduce+hallucination+RAG" target="_blank" rel="noopener">reduce hallucination RAG</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-fri" style="--i:1"><header><span class="day-badge">Fri</span><h3>Experiments</h3></header><div class="day-body">
+<ul><li class="">Change chunk size and top-k, note what changes</li><li class="">Stretch: hybrid search (keyword + vector)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=postgres+hybrid+search+full+text+pgvector" target="_blank" rel="noopener">postgres hybrid search full text pgvector</a></li></ul></li><li class="">Stretch: reranking<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=reranking+RAG+explained" target="_blank" rel="noopener">reranking RAG explained</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-sat" style="--i:2"><header><span class="day-badge">Sat</span><h3>Tests + README</h3></header><div class="day-body">
+<ul><li class="">Mock LLM and embeddings in tests</li><li class="">README with a "how it works" diagram<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=mermaid+diagram+github+readme" target="_blank" rel="noopener">mermaid diagram github readme</a></li></ul></li></ul>
+</div></article>
+</div>
+<div class="done reveal"><p class="done-head">&#9989; Done when <span class="count"></span></p>
+<ul><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">Answers cite chunks or pages</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">System says "not found" instead of hallucinating</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">You can explain chunking tradeoffs</span></label></li></ul>
+</div>
+</div></section>
+</section>
+<section class="chapter phase p4" id="phase-4-capstone-weeks-10-12" data-spy><div class="phase-banner reveal"><span class="phase-num">Phase 4</span><h1>Capstone (Weeks 10-12)</h1></div>
+<p class="note"><strong>Project:</strong> Document Q&amp;A service with auth, background ingestion, rate limiting, Docker, CI/CD, live deployment, and an eval script.</p>
+<p class="note"><strong>Day 1:</strong> write one sentence: "This service lets [who] upload [what] and ask questions, getting cited answers."</p>
+<section class="week reveal" id="week-10" data-spy><div class="week-head"><span class="week-num">Week <b>10</b></span><h2>Core</h2></div><div class="week-body">
+<div class="deliverable reveal"><span class="tag">&#127919; Deliverable</span><p>Auth + upload + background ingestion with BullMQ.</p></div>
+<div class="days">
+<article class="day reveal d-mon" style="--i:0"><header><span class="day-badge">Mon</span><h3>Design</h3></header><div class="day-body">
+<ul><li class="">Write a design doc: smallest feature list, DB schema, endpoints, architecture sketch<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=how+to+write+a+software+design+doc" target="_blank" rel="noopener">how to write a software design doc</a></li></ul></li><li class="">Cut anything not essential</li></ul>
+</div></article>
+<article class="day reveal d-tue" style="--i:1"><header><span class="day-badge">Tue</span><h3>Scaffold</h3></header><div class="day-body">
+<ul><li class="">New repo, reuse auth, config, errors, test setup from Project 1</li><li class="">Set up the DB schema and migrations</li></ul>
+</div></article>
+<article class="day reveal d-wed" style="--i:2"><header><span class="day-badge">Wed</span><h3>Uploads</h3></header><div class="day-body">
+<ul><li class="">File upload in Fastify<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=fastify+multipart+file+upload" target="_blank" rel="noopener">fastify multipart file upload</a></li></ul></li><li class="">Store files (local volume or S3-compatible)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=s3+compatible+storage+node" target="_blank" rel="noopener">s3 compatible storage node</a></li></ul></li><li class=""><code>documents</code> table with a status column</li></ul>
+</div></article>
+<article class="day reveal d-thu" style="--i:0"><header><span class="day-badge">Thu</span><h3>Background jobs</h3></header><div class="day-body">
+<ul><li class="">Why queues exist<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=background+jobs+queue+explained" target="_blank" rel="noopener">background jobs queue explained</a></li></ul></li><li class="">BullMQ queue and worker<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=bullmq+getting+started" target="_blank" rel="noopener">bullmq getting started</a></li></ul></li><li class="">Upload returns instantly; worker does extract, chunk, embed</li><li class="ref"><span class="ref-tag">&#9654; reference</span> <a href="https://www.youtube.com/watch?v=rOpEN1JDaD0" target="_blank" rel="noopener">Subscription API video</a>, the scheduled workflow / reminder section. It uses a paid service (Upstash QStash); just watch the idea of scheduling work for later, then use BullMQ's delayed jobs instead.<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=bullmq+delayed+jobs" target="_blank" rel="noopener">bullmq delayed jobs</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-fri" style="--i:1"><header><span class="day-badge">Fri</span><h3>Job status</h3></header><div class="day-body">
+<ul><li class="">Status endpoint: queued, processing, done, failed</li><li class="">Retries with backoff<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=bullmq+retries+backoff" target="_blank" rel="noopener">bullmq retries backoff</a></li></ul></li><li class="">Store failure reasons</li></ul>
+</div></article>
+<article class="day reveal d-sat" style="--i:2"><header><span class="day-badge">Sat</span><h3>Connect RAG</h3></header><div class="day-body">
+<ul><li class="">Query endpoint, scoped to the logged-in user's documents only</li><li class="">Test: user A never retrieves user B's chunks</li></ul>
+</div></article>
+</div>
+<div class="done reveal"><p class="done-head">&#9989; Done when <span class="count"></span></p>
+<ul><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">Upload returns immediately; ingestion runs in the background</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">Cross-user isolation has a test</span></label></li></ul>
+</div>
+</div></section>
+<section class="week reveal" id="week-11" data-spy><div class="week-head"><span class="week-num">Week <b>11</b></span><h2>Hardening + deployment</h2></div><div class="week-body">
+<div class="deliverable reveal"><span class="tag">&#127919; Deliverable</span><p>Rate limiting, full Docker stack, CI/CD, live deployment.</p></div>
+<div class="days">
+<article class="day reveal d-mon" style="--i:0"><header><span class="day-badge">Mon</span><h3>Rate limiting</h3></header><div class="day-body">
+<ul><li class="">Redis-backed per-user rate limiting<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=redis+rate+limiting+token+bucket" target="_blank" rel="noopener">redis rate limiting token bucket</a><a class="chip" href="https://www.google.com/search?q=fastify+rate+limit+redis" target="_blank" rel="noopener">fastify rate limit redis</a></li></ul></li><li class="">Stricter limits on LLM endpoints</li><li class="ref"><span class="ref-tag">&#9654; reference</span> <a href="https://www.youtube.com/watch?v=rOpEN1JDaD0" target="_blank" rel="noopener">Subscription API video</a>, the security/rate-limiting section. It uses a hosted service (Arcjet), so only take the idea of a token bucket and where the rate limiter sits in the request pipeline. Build your own with Redis.</li></ul>
+</div></article>
+<article class="day reveal d-tue" style="--i:1"><header><span class="day-badge">Tue</span><h3>Chat features</h3></header><div class="day-body">
+<ul><li class="">Conversation history table</li><li class="">Stream answers to the client</li><li class="">Limit history length sent to the LLM (cost control)</li></ul>
+</div></article>
+<article class="day reveal d-wed" style="--i:2"><header><span class="day-badge">Wed</span><h3>Docker</h3></header><div class="day-body">
+<ul><li class="">Compose: api + worker + Postgres + Redis<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=docker+compose+multiple+services+worker" target="_blank" rel="noopener">docker compose multiple services worker</a></li></ul></li><li class="">Healthchecks for all services</li></ul>
+</div></article>
+<article class="day reveal d-thu" style="--i:0"><header><span class="day-badge">Thu</span><h3>CI/CD</h3></header><div class="day-body">
+<ul><li class="">Reuse your Week 7 workflow</li><li class="">Make sure the worker deploys too</li></ul>
+</div></article>
+<article class="day reveal d-fri" style="--i:1"><header><span class="day-badge">Fri</span><h3>Deploy</h3></header><div class="day-body">
+<ul><li class="">Deploy to a live URL</li><li class="">Smoke test: upload, ingest, query on the live system</li><li class="">Set a spending cap on your LLM provider account</li></ul>
+</div></article>
+<article class="day reveal d-sat" style="--i:2"><header><span class="day-badge">Sat</span><h3>Observability + fixes</h3></header><div class="day-body">
+<ul><li class="">Structured logs</li><li class="">Error tracking<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=sentry+node+error+tracking" target="_blank" rel="noopener">sentry node error tracking</a></li></ul></li><li class="">Fix what the live deploy exposed</li></ul>
+</div></article>
+</div>
+<div class="done reveal"><p class="done-head">&#9989; Done when <span class="count"></span></p>
+<ul><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">Hitting the LLM endpoint too fast returns 429</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">API and worker both run on Docker and on the live host</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">A spending cap protects your API key</span></label></li></ul>
+</div>
+</div></section>
+<section class="week reveal" id="week-12" data-spy><div class="week-head"><span class="week-num">Week <b>12</b></span><h2>Eval, polish, ship</h2></div><div class="week-body">
+<div class="deliverable reveal"><span class="tag">&#127919; Deliverable</span><p>Eval script with results, README with architecture diagram, clean repo, resume bullets.</p></div>
+<div class="days">
+<article class="day reveal d-mon" style="--i:0"><header><span class="day-badge">Mon</span><h3>Eval dataset</h3></header><div class="day-body">
+<ul><li class="">Build 10-20 questions on a fixed document set<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=RAG+evaluation+dataset" target="_blank" rel="noopener">RAG evaluation dataset</a></li></ul></li><li class="">Add expected answers or expected source chunks</li></ul>
+</div></article>
+<article class="day reveal d-tue" style="--i:1"><header><span class="day-badge">Tue</span><h3>Eval script</h3></header><div class="day-body">
+<ul><li class="">Measure retrieval hit rate<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=RAG+evaluation+retrieval+metrics+hit+rate" target="_blank" rel="noopener">RAG evaluation retrieval metrics hit rate</a></li></ul></li><li class="">Measure answer quality (keyword checks or LLM-as-judge)<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=LLM+as+a+judge+evaluation" target="_blank" rel="noopener">LLM as a judge evaluation</a></li></ul></li><li class="">Print a results table</li></ul>
+</div></article>
+<article class="day reveal d-wed" style="--i:2"><header><span class="day-badge">Wed</span><h3>Improve</h3></header><div class="day-body">
+<ul><li class="">Tune chunk size, top-k, prompt using the results</li><li class="">Record before/after scores</li></ul>
+</div></article>
+<article class="day reveal d-thu" style="--i:0"><header><span class="day-badge">Thu</span><h3>README</h3></header><div class="day-body">
+<ul><li class="">Problem, features, architecture diagram (Mermaid), stack, how to run, design decisions, eval results, live link<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=good+github+readme+examples" target="_blank" rel="noopener">good github readme examples</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-fri" style="--i:1"><header><span class="day-badge">Fri</span><h3>Clean up</h3></header><div class="day-body">
+<ul><li class="">Remove dead code</li><li class="">Add <code>.env.example</code></li><li class="">Pin versions, add a license</li><li class="">Record a demo GIF<ul><li class="search"><span class="search-label">search</span><a class="chip" href="https://www.google.com/search?q=record+screen+to+gif" target="_blank" rel="noopener">record screen to gif</a></li></ul></li></ul>
+</div></article>
+<article class="day reveal d-sat" style="--i:2"><header><span class="day-badge">Sat</span><h3>Final polish</h3></header><div class="day-body">
+<ul><li class="">Update resume and LinkedIn</li><li class="">Start applying</li></ul>
+</div></article>
+</div>
+<div class="done reveal"><p class="done-head">&#9989; Done when <span class="count"></span></p>
+<ul><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt"><code>npm run eval</code> prints a score table</span></label></li><li class="check"><label><input type="checkbox"><span class="box"></span><span class="txt">You can walk someone through every design decision in 5 minutes</span></label></li></ul>
+</div>
+</div></section>
+</section>
+<section class="chapter plain" id="resume-bullets-fill-in-real-numbers" data-spy><div class="phase-banner plain reveal"><h1>Resume bullets (fill in real numbers)</h1></div>
+<p class="subhead"><strong>Project 1: Bookmarks API</strong></p>
+<ul><li class="">Built a REST API with Node.js, TypeScript, Fastify, and PostgreSQL, with JWT auth, per-user data isolation, and Zod validation.</li><li class="">Containerized with Docker Compose (app, Postgres, Redis); Redis caching reduced read latency by <strong>X%</strong>.</li><li class="">Set up GitHub Actions CI/CD with <strong>N</strong> automated tests and automatic deployment to <strong>host</strong>.</li></ul>
+<p class="subhead"><strong>Project 2: Document Q&amp;A (RAG)</strong></p>
+<ul><li class="">Built a RAG service with pgvector and an LLM API, returning cited answers with streaming responses.</li><li class="">Implemented async ingestion with BullMQ workers and Redis-based per-user rate limiting.</li><li class="">Built an eval harness over <strong>N</strong> questions; improved retrieval hit rate from <strong>X% to Y%</strong>.</li></ul>
+</section>
+<section class="chapter plain" id="weekly-journal-template" data-spy><div class="phase-banner plain reveal"><h1>Weekly journal template</h1></div>
+<figure class="code reveal"><button class="copy" type="button">Copy</button><pre><code>## Week N
+- Shipped: yes/no, what
+- Hardest thing:
+- Something I understand now that I didn't Monday:
+- Version/docs mismatch that bit me:
+- Monday's first sprint (write it now):</code></pre></figure>
+</section>
+    <footer><span>&#127793;</span> One sprint at a time. You've got this.</footer>
+  </main>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeBtn');
+  function effective() {
+    return root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  }
+  function paintBtn() { themeBtn.textContent = effective() === 'dark' ? '☀️' : '🌙'; }
+  paintBtn();
+  themeBtn.addEventListener('click', function () {
+    var next = effective() === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    try { localStorage.setItem('bp-theme', next); } catch (e) {}
+    paintBtn();
+  });
+
+  /* mobile nav */
+  var body = document.body;
+  document.getElementById('menuBtn').addEventListener('click', function () { body.classList.toggle('nav-open'); });
+  document.getElementById('scrim').addEventListener('click', function () { body.classList.remove('nav-open'); });
+  document.querySelectorAll('#toc a').forEach(function (a) { a.addEventListener('click', function () { body.classList.remove('nav-open'); }); });
+
+  /* reveal on scroll */
+  var reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    var ro = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); ro.unobserve(e.target); } });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    reveals.forEach(function (el) { ro.observe(el); });
+  } else { reveals.forEach(function (el) { el.classList.add('in'); }); }
+
+  /* scroll spy */
+  var links = {};
+  document.querySelectorAll('#toc a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  var current = null;
+  function setActive(id) {
+    if (current === id || !links[id]) return;
+    if (current && links[current]) links[current].classList.remove('active');
+    current = id; links[id].classList.add('active');
+    var sb = document.getElementById('sidebar'), a = links[id];
+    var r = a.getBoundingClientRect(), sr = sb.getBoundingClientRect();
+    if (r.top < sr.top + 60 || r.bottom > sr.bottom - 60) sb.scrollTo({ top: a.offsetTop - sb.clientHeight / 2, behavior: 'smooth' });
+  }
+  if ('IntersectionObserver' in window) {
+    var so = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) setActive(e.target.id); });
+    }, { rootMargin: '-15% 0px -75% 0px' });
+    document.querySelectorAll('[data-spy]').forEach(function (el) { if (el.id) so.observe(el); });
+  }
+
+  /* reading progress */
+  var bar = document.getElementById('readbar');
+  function onScroll() {
+    var h = document.documentElement.scrollHeight - innerHeight;
+    bar.style.width = (h > 0 ? (scrollY / h) * 100 : 0) + '%';
+  }
+  addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  /* checklists */
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('li.check input'));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem('bp-checks') || '{}'); } catch (e) {}
+  var progText = document.getElementById('progText'), progFill = document.getElementById('progFill');
+  function refresh() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    progText.textContent = done + ' / ' + boxes.length;
+    progFill.style.width = (boxes.length ? done / boxes.length * 100 : 0) + '%';
+    document.querySelectorAll('.done').forEach(function (d) {
+      var all = d.querySelectorAll('input'), c = d.querySelectorAll('input:checked').length;
+      var cnt = d.querySelector('.count'); if (cnt) cnt.textContent = c + '/' + all.length;
+    });
+  }
+  function burst(el) {
+    var r = el.getBoundingClientRect(), emo = ['✨', '🌿', '🌸', '⭐'];
+    for (var k = 0; k < 6; k++) {
+      var s = document.createElement('span'); s.className = 'sparkle'; s.textContent = emo[k % emo.length];
+      s.style.left = (r.left + 8) + 'px'; s.style.top = (r.top + 4) + 'px';
+      s.style.setProperty('--x', (Math.random() * 90 - 45) + 'px'); s.style.setProperty('--y', (-20 - Math.random() * 60) + 'px');
+      document.body.appendChild(s); setTimeout(function (n) { return function () { n.remove(); }; }(s), 900);
+    }
+  }
+  boxes.forEach(function (b, i) {
+    if (saved[i]) b.checked = true;
+    b.addEventListener('change', function () {
+      saved[i] = b.checked;
+      try { localStorage.setItem('bp-checks', JSON.stringify(saved)); } catch (e) {}
+      refresh(); if (b.checked) burst(b.nextElementSibling);
+    });
+  });
+  refresh();
+
+  /* copy buttons */
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var t = btn.parentNode.querySelector('code').innerText;
+      (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () {
+        btn.textContent = 'Copied!'; setTimeout(function () { btn.textContent = 'Copy'; }, 1400);
+      }).catch(function () { btn.textContent = 'Press Ctrl+C'; setTimeout(function () { btn.textContent = 'Copy'; }, 1400); });
+    });
+  });
+})();
+</script>
+</body>
+</html>
